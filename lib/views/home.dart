@@ -6,9 +6,11 @@ import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:todolist/Models/taskModel.dart';
 import 'package:todolist/constants/constants.dart';
 import 'package:todolist/controller/auth_controller.dart';
 import 'package:todolist/controller/dateController.dart';
+import 'package:todolist/controller/task_controller.dart';
 import 'package:todolist/main.dart';
 import 'package:todolist/utils/utils.dart';
 import 'package:todolist/views/datepicker.dart';
@@ -21,6 +23,7 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TaskController _taskController = Get.put(TaskController());
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -106,64 +109,69 @@ class Home extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-                physics: ScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.all(14.0),
-                    child: Container(
-                      height: 60,
-                      decoration:
-                          BoxDecoration(color: Colors.grey.withOpacity(0.1)),
-                      child: ListTile(
-                        leading: Container(
-                          // Adjust the padding as needed
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white, // Border color
-                              width: 1.0, // Border width
+              child: Obx(
+                () => ListView.separated(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  physics: ScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final List<TaskModel> _tasklist = _taskController.taskList;
+                    print(
+                        "--------_tasklist${_taskController.taskList[index]}");
+                    return Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: Container(
+                        height: 60,
+                        decoration:
+                            BoxDecoration(color: Colors.grey.withOpacity(0.1)),
+                        child: ListTile(
+                          leading: Container(
+                            // Adjust the padding as needed
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white, // Border color
+                                width: 1.0, // Border width
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 10.0,
+
+                              child: Icon(
+                                Icons.done,
+                                color: Colors.black,
+                              ),
+
+                              backgroundColor: Colors.blue, // Avatar radius
+                              // Your image asset
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: 10.0,
-
-                            child: Icon(
-                              Icons.done,
-                              color: Colors.black,
-                            ),
-
-                            backgroundColor: Colors.blue, // Avatar radius
-                            // Your image asset
+                          title: Text(_tasklist[index].taskname),
+                          subtitle: Text("21 may 2023"),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                  onPressed: () {},
+                                  icon: Icon(Icons.delete_outlined)),
+                              IconButton(
+                                  onPressed: () {
+                                    _showEditModelBottomSheet();
+                                  },
+                                  icon: Icon(Icons.edit_note_outlined)),
+                            ],
                           ),
-                        ),
-                        title: Text("Maths Home work"),
-                        subtitle: Text("21 may 2023"),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                                onPressed: () {},
-                                icon: Icon(Icons.delete_outlined)),
-                            IconButton(
-                                onPressed: () {
-                                  _showEditModelBottomSheet();
-                                },
-                                icon: Icon(Icons.edit_note_outlined)),
-                          ],
                         ),
                       ),
-                    ),
-                  );
-                },
-                itemCount: 10,
-                separatorBuilder: (context, index) {
-                  return SizedBox(
-                    height: 15,
-                  );
-                },
+                    );
+                  },
+                  itemCount: _taskController.taskList.length,
+                  separatorBuilder: (context, index) {
+                    return SizedBox(
+                      height: 15,
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -173,6 +181,8 @@ class Home extends StatelessWidget {
   }
 
   void _showEditModelBottomSheet() {
+    TextEditingController taskname = TextEditingController();
+    TextEditingController description = TextEditingController();
     Get.bottomSheet(
       Padding(
         padding: const EdgeInsets.all(8.0),
@@ -210,6 +220,7 @@ class Home extends StatelessWidget {
                         BorderRadius.circular(5.0), // Optional border radius
                   ),
                   child: TextFormField(
+                    controller: taskname,
                     decoration: InputDecoration(
                       hintText: 'Do maths homework',
                       border: InputBorder.none, // Hide the default border
@@ -234,6 +245,7 @@ class Home extends StatelessWidget {
                   child: TextFormField(
                     maxLines: 4,
                     maxLength: 100,
+                    controller: description,
                     decoration: InputDecoration(
                       hintText: 'Discription',
                       border: InputBorder.none, // Hide the default border
@@ -258,6 +270,8 @@ class Home extends StatelessWidget {
 }
 
 void _showModalBottomSheet() {
+  TextEditingController tasknameController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
   Get.bottomSheet(
     Padding(
       padding: const EdgeInsets.all(8.0),
@@ -295,6 +309,7 @@ void _showModalBottomSheet() {
                       BorderRadius.circular(5.0), // Optional border radius
                 ),
                 child: TextFormField(
+                  controller: tasknameController,
                   decoration: InputDecoration(
                     hintText: 'Do maths homework',
                     border: InputBorder.none, // Hide the default border
@@ -317,6 +332,7 @@ void _showModalBottomSheet() {
                       BorderRadius.circular(5.0), // Optional border radius
                 ),
                 child: TextFormField(
+                  controller: descriptionController,
                   maxLines: 4,
                   maxLength: 100,
                   decoration: InputDecoration(
@@ -335,11 +351,11 @@ void _showModalBottomSheet() {
                           .doc(FirebaseAuth.instance.currentUser!.uid)
                           .collection('task')
                           .add({
-                        "taskname": "maths home work",
-                        "taskdiscription": "Do maths Home Work",
+                        "taskname": tasknameController.text,
+                        "taskdiscription": descriptionController.text,
                         "duedate": "11-12-2023",
-                        "ComplettionStaus": true,
-                        "assigneddate": "12-34-45"
+                        "ComplettionStaus": false,
+                        "assigneddate": DateTime.now(),
                       });
                       Get.back();
                     },
