@@ -1,14 +1,23 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:todolist/constants/constants.dart';
 import 'package:todolist/controller/auth_controller.dart';
+import 'package:todolist/controller/dateController.dart';
 import 'package:todolist/main.dart';
+import 'package:todolist/utils/utils.dart';
+import 'package:todolist/views/datepicker.dart';
+
+final DueDateController _controller = Get.put(DueDateController());
+//final DueDateController _controller = Get.find<DueDateController>();
 
 class Home extends StatelessWidget {
-  const Home({super.key});
+  Home({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +177,7 @@ class Home extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
-          height: 300,
+          height: 450,
           decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.8),
               borderRadius: BorderRadius.horizontal(
@@ -207,7 +216,31 @@ class Home extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text("Discription"),
+                SizedBox(
+                  height: 10,
+                ),
+                Container(
+                  width: 400.0, // Set the width as needed
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Optional padding
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue, // Border color
+                      width: 1.0, // Border width
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(5.0), // Optional border radius
+                  ),
+                  child: TextFormField(
+                    maxLines: 4,
+                    maxLength: 100,
+                    decoration: InputDecoration(
+                      hintText: 'Discription',
+                      border: InputBorder.none, // Hide the default border
+                    ),
+                  ),
+                ),
+
                 ListTile(
                   leading: Icon(Icons.alarm_on_outlined),
                   trailing: Icon(Icons.send),
@@ -229,7 +262,7 @@ void _showModalBottomSheet() {
     Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
-        height: 300,
+        height: 450,
         decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.8),
             borderRadius: BorderRadius.horizontal(
@@ -250,7 +283,7 @@ void _showModalBottomSheet() {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Container(
-                width: 350.0, // Set the width as needed
+                width: 400.0, // Set the width as needed
                 padding:
                     EdgeInsets.symmetric(horizontal: 10.0), // Optional padding
                 decoration: BoxDecoration(
@@ -268,10 +301,49 @@ void _showModalBottomSheet() {
                   ),
                 ),
               ),
-              Text("Discription"),
+              SizedBox(
+                height: 10,
+              ),
+              Container(
+                width: 350.0, // Set the width as needed
+                padding:
+                    EdgeInsets.symmetric(horizontal: 10.0), // Optional padding
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.blue, // Border color
+                    width: 1.0, // Border width
+                  ),
+                  borderRadius:
+                      BorderRadius.circular(5.0), // Optional border radius
+                ),
+                child: TextFormField(
+                  maxLines: 4,
+                  maxLength: 100,
+                  decoration: InputDecoration(
+                    hintText: 'Discription',
+                    border: InputBorder.none, // Hide the default border
+                  ),
+                ),
+              ),
+
               ListTile(
                 leading: Icon(Icons.alarm_on_outlined),
-                trailing: Icon(Icons.send),
+                trailing: IconButton(
+                    onPressed: () {
+                      FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .collection('task')
+                          .add({
+                        "taskname": "maths home work",
+                        "taskdiscription": "Do maths Home Work",
+                        "duedate": "11-12-2023",
+                        "ComplettionStaus": true,
+                        "assigneddate": "12-34-45"
+                      });
+                      Get.back();
+                    },
+                    icon: Icon(Icons.send)),
               ),
 
               // Add more list items as needed

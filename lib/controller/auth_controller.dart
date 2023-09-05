@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthController extends GetxController {
   FirebaseAuth auth = FirebaseAuth.instance;
   GoogleSignIn googleSignIn = GoogleSignIn();
   Rx<User?> user = Rx<User?>(FirebaseAuth.instance.currentUser);
-
+  CollectionReference<Map<String, dynamic>> firebasecollection =
+      FirebaseFirestore.instance.collection('users');
   @override
   void onInit() {
     // TODO: implement onInit
@@ -31,6 +33,13 @@ class AuthController extends GetxController {
     final userCredential = await auth.signInWithCredential(credential);
     User? user = userCredential.user!;
     print("uuuuser$user");
+
+    FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      "username": user.displayName,
+      "profilepic": user.photoURL,
+      "email": user.email,
+      "uid": user.uid
+    });
   }
 
   void signOut() async {
