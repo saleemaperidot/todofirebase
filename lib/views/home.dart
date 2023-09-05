@@ -139,7 +139,9 @@ class Home extends StatelessWidget {
                                 onPressed: () {},
                                 icon: Icon(Icons.delete_outlined)),
                             IconButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  _showEditModelBottomSheet();
+                                },
                                 icon: Icon(Icons.edit_note_outlined)),
                           ],
                         ),
@@ -158,6 +160,66 @@ class Home extends StatelessWidget {
           ],
         ),
       )),
+    );
+  }
+
+  void _showEditModelBottomSheet() {
+    Get.bottomSheet(
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          height: 300,
+          decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.8),
+              borderRadius: BorderRadius.horizontal(
+                  left: Radius.circular(10), right: Radius.circular(10))),
+          // Background color of the bottom sheet
+          child: Padding(
+            padding: const EdgeInsets.all(13.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(
+                  height: 20,
+                ),
+                Text(
+                  "Edit task",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Container(
+                  width: 350.0, // Set the width as needed
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Optional padding
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue, // Border color
+                      width: 1.0, // Border width
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(5.0), // Optional border radius
+                  ),
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      hintText: 'Do maths homework',
+                      border: InputBorder.none, // Hide the default border
+                    ),
+                  ),
+                ),
+                Text("Discription"),
+                ListTile(
+                  leading: Icon(Icons.alarm_on_outlined),
+                  trailing: Icon(Icons.send),
+                ),
+
+                // Add more list items as needed
+              ],
+            ),
+          ),
+        ),
+      ),
+      isScrollControlled: true, // Use true for a modal bottom sheet
     );
   }
 }
