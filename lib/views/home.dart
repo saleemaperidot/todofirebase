@@ -19,6 +19,10 @@ import 'package:todolist/views/single_task.dart';
 
 final DueDateController _controller = Get.put(DueDateController());
 //final DueDateController _controller = Get.find<DueDateController>();
+final now = DateTime.now();
+
+// Format the date in the desired format
+final formattedDate = DateFormat('dd-MMM-yyyy').format(now);
 
 class Home extends StatelessWidget {
   Home({super.key});
@@ -112,111 +116,69 @@ class Home extends StatelessWidget {
                 ),
               ),
             ),
-            _taskController.taskList.isEmpty
-                ? EmptyWidget()
-                : Expanded(
-                    child: Obx(() {
-                      return _taskController.taskList.isEmpty
-                          ? EmptyWidget()
-                          : ListView.separated(
-                              scrollDirection: Axis.vertical,
-                              shrinkWrap: true,
-                              physics: ScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                final List<TaskModel> _tasklist =
-                                    _taskController.taskList;
-                                print(
-                                    "--------_tasklist${_taskController.taskList[index]}");
-                                return Padding(
-                                  padding: const EdgeInsets.all(14.0),
-                                  child: Container(
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                        color: Colors.grey.withOpacity(0.1)),
-                                    child: InkWell(
-                                      onDoubleTap: () {
-                                        Get.to(SingleTask(
-                                            id: _tasklist[index].id));
-                                      },
-                                      child: ListTile(
-                                        leading: Container(
-                                          // Adjust the padding as needed
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color:
-                                                  Colors.white, // Border color
-                                              width: 1.0, // Border width
-                                            ),
-                                          ),
-                                          child: InkWell(
-                                            onTap: () {
-                                              avatarController
-                                                  .updateSelectedAvatar(index);
-                                            },
-                                            child: Obx(
-                                              () => CircleAvatar(
-                                                radius: 10.0,
-
-                                                child: Icon(
-                                                  Icons.done,
-                                                  color: Colors.black,
-                                                ),
-
-                                                backgroundColor: avatarController
-                                                            .selectedAvatarIndex
-                                                            .value ==
-                                                        index
-                                                    ? Colors.blue
-                                                    : Colors
-                                                        .grey, // Avatar radius
-                                                // Your image asset
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        title: Text(_tasklist[index].taskname),
-                                        subtitle:
-                                            Text(_tasklist[index].duedate!),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                                onPressed: () async {
-                                                  await _taskController.delete(
-                                                      _tasklist[index].id);
-                                                  // Get.put(TaskController());
-                                                },
-                                                icon: Icon(
-                                                    Icons.delete_outlined)),
-                                            IconButton(
-                                                onPressed: () async {
-                                                  TaskModel task =
-                                                      await _taskController
-                                                          .fetchSingleTask(
-                                                              _tasklist[index]
-                                                                  .id);
-                                                  _showEditModelBottomSheet(
-                                                      task);
-                                                },
-                                                icon: Icon(
-                                                    Icons.edit_note_outlined)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+            Expanded(
+              child: Obx(() {
+                return _taskController.taskList.isEmpty
+                    ? EmptyWidget()
+                    : ListView.separated(
+                        scrollDirection: Axis.vertical,
+                        shrinkWrap: true,
+                        physics: ScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          final List<TaskModel> _tasklist =
+                              _taskController.taskList;
+                          print(
+                              "--------_tasklist${_taskController.taskList[index]}");
+                          return Padding(
+                            padding: const EdgeInsets.all(14.0),
+                            child: Container(
+                              height: 60,
+                              decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(0.1)),
+                              child: InkWell(
+                                onTap: () {
+                                  Get.to(SingleTask(id: _tasklist[index].id));
+                                },
+                                child: ListTile(
+                                  leading: LeadingListtile(
+                                      status: _tasklist[index].status),
+                                  title: Text(_tasklist[index].taskname),
+                                  subtitle: Text(_tasklist[index].duedate!),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                          onPressed: () async {
+                                            await _taskController
+                                                .delete(_tasklist[index].id);
+                                            // Get.put(TaskController());
+                                          },
+                                          icon: Icon(Icons.delete_outlined)),
+                                      IconButton(
+                                          onPressed: () async {
+                                            TaskModel task =
+                                                await _taskController
+                                                    .fetchSingleTask(
+                                                        _tasklist[index].id);
+                                            _showEditModelBottomSheet(task);
+                                          },
+                                          icon: Icon(Icons.edit_note_outlined)),
+                                    ],
                                   ),
-                                );
-                              },
-                              itemCount: _taskController.taskList.length,
-                              separatorBuilder: (context, index) {
-                                return SizedBox(
-                                  height: 15,
-                                );
-                              },
-                            );
-                    }),
-                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        itemCount: _taskController.taskList.length,
+                        separatorBuilder: (context, index) {
+                          return SizedBox(
+                            height: 15,
+                          );
+                        },
+                      );
+              }),
+            ),
           ],
         ),
       )),
@@ -226,6 +188,7 @@ class Home extends StatelessWidget {
   void _showEditModelBottomSheet(TaskModel task) {
     TextEditingController taskname = TextEditingController();
     TextEditingController description = TextEditingController();
+    TextEditingController datecontroller = TextEditingController();
     taskname.text = task.taskname;
     description.text = task.taskdiscription;
     Get.bottomSheet(
@@ -297,7 +260,26 @@ class Home extends StatelessWidget {
                     ),
                   ),
                 ),
-
+                Container(
+                  width: 350.0, // Set the width as needed
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Optional padding
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue, // Border color
+                      width: 1.0, // Border width
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(5.0), // Optional border radius
+                  ),
+                  child: TextFormField(
+                    controller: datecontroller,
+                    decoration: InputDecoration(
+                      hintText: 'dd-mm-yyyy',
+                      border: InputBorder.none, // Hide the default border
+                    ),
+                  ),
+                ),
                 ListTile(
                   leading: Icon(Icons.alarm_on_outlined),
                   trailing: IconButton(
@@ -311,7 +293,7 @@ class Home extends StatelessWidget {
                             "taskdiscription": description.text,
                             "duedate": "11-12-2023",
                             "ComplettionStaus": false,
-                            "assigneddate": DateTime.now().toString(),
+                            "assigneddate": formattedDate.toString(),
                           });
                         Get.put(TaskController());
                         Get.back();
@@ -330,9 +312,39 @@ class Home extends StatelessWidget {
   }
 }
 
+class LeadingListtile extends StatelessWidget {
+  LeadingListtile({super.key, required this.status});
+  bool status;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      // Adjust the padding as needed
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white, // Border color
+          width: 1.0, // Border width
+        ),
+      ),
+      child: CircleAvatar(
+        radius: 10.0,
+
+        child: Icon(
+          Icons.done,
+          color: Colors.black,
+        ),
+
+        backgroundColor: status ? Colors.blue : Colors.grey, // Avatar radius
+        // Your image asset
+      ),
+    );
+  }
+}
+
 void _showModalBottomSheet() {
   TextEditingController tasknameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
+  TextEditingController datecontroller = TextEditingController();
   Get.bottomSheet(
     Padding(
       padding: const EdgeInsets.all(8.0),
@@ -403,10 +415,37 @@ void _showModalBottomSheet() {
                 ),
               ),
 
+              Container(
+                width: 350.0, // Set the width as needed
+                padding:
+                    EdgeInsets.symmetric(horizontal: 10.0), // Optional padding
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.blue, // Border color
+                    width: 1.0, // Border width
+                  ),
+                  borderRadius:
+                      BorderRadius.circular(5.0), // Optional border radius
+                ),
+                child: TextFormField(
+                  controller: datecontroller,
+                  decoration: InputDecoration(
+                    hintText: 'Due date(dd-mm-yyyy)',
+                    border: InputBorder.none, // Hide the default border
+                  ),
+                ),
+              ),
               ListTile(
                 leading: Icon(Icons.alarm_on_outlined),
                 trailing: IconButton(
                     onPressed: () async {
+                      // Parse the input date string
+                      DateTime parsedDate =
+                          DateFormat('dd-MM-yyyy').parse(datecontroller.text);
+
+                      // Format the parsed date in the desired format
+                      String formatteddueDate =
+                          DateFormat('dd-MMM-yyyy').format(parsedDate);
                       await FirebaseFirestore.instance
                           .collection('users')
                           .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -414,9 +453,9 @@ void _showModalBottomSheet() {
                           .add({
                         "taskname": tasknameController.text,
                         "taskdiscription": descriptionController.text,
-                        "duedate": "11-12-2023",
+                        "duedate": formatteddueDate.toString(),
                         "ComplettionStaus": false,
-                        "assigneddate": DateTime.now().toString(),
+                        "assigneddate": formattedDate.toString(),
                       });
 
                       // TaskController controller = Get.find<TaskController>();

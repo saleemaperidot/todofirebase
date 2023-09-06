@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -18,7 +20,7 @@ class _SingleTaskState extends State<SingleTask> {
   TaskModel? singletask;
 
   TaskController _taskController = Get.find<TaskController>();
-
+  bool isChecked = false;
   Future<void> task() async {
     final _singletask = await _taskController.fetchSingleTask(widget.id);
     setState(() {
@@ -103,6 +105,27 @@ class _SingleTaskState extends State<SingleTask> {
                 Text(
                   singletask!.taskdiscription,
                   style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Completed :"),
+                    Checkbox(
+                      value: singletask!.status,
+                      onChanged: (newValue) {
+                        setState(() {
+                          FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(FirebaseAuth.instance.currentUser!.uid)
+                              .collection('task')
+                            ..doc(singletask!.id).update({
+                              "ComplettionStaus": newValue,
+                            });
+                          task();
+                        });
+                      },
+                    ),
+                  ],
                 )
               ],
             ),
