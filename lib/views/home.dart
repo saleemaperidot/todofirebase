@@ -10,20 +10,24 @@ import 'package:todolist/Models/taskModel.dart';
 import 'package:todolist/constants/constants.dart';
 import 'package:todolist/controller/auth_controller.dart';
 import 'package:todolist/controller/dateController.dart';
+import 'package:todolist/controller/mark_complte_controller.dart';
 import 'package:todolist/controller/task_controller.dart';
 import 'package:todolist/main.dart';
 import 'package:todolist/utils/utils.dart';
 import 'package:todolist/views/datepicker.dart';
+import 'package:todolist/views/single_task.dart';
 
 final DueDateController _controller = Get.put(DueDateController());
 //final DueDateController _controller = Get.find<DueDateController>();
 
 class Home extends StatelessWidget {
   Home({super.key});
-
+  final TaskController _taskController = Get.put(TaskController());
   @override
   Widget build(BuildContext context) {
     final TaskController _taskController = Get.put(TaskController());
+    //final AvatarController controller = Get.put(AvatarController());
+    final AvatarController avatarController = Get.put(AvatarController());
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -108,81 +112,122 @@ class Home extends StatelessWidget {
                 ),
               ),
             ),
-            Expanded(
-              child: Obx(
-                () => ListView.separated(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final List<TaskModel> _tasklist = _taskController.taskList;
-                    print(
-                        "--------_tasklist${_taskController.taskList[index]}");
-                    return Padding(
-                      padding: const EdgeInsets.all(14.0),
-                      child: Container(
-                        height: 60,
-                        decoration:
-                            BoxDecoration(color: Colors.grey.withOpacity(0.1)),
-                        child: ListTile(
-                          leading: Container(
-                            // Adjust the padding as needed
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white, // Border color
-                                width: 1.0, // Border width
-                              ),
-                            ),
-                            child: CircleAvatar(
-                              radius: 10.0,
+            _taskController.taskList.isEmpty
+                ? EmptyWidget()
+                : Expanded(
+                    child: Obx(() {
+                      return _taskController.taskList.isEmpty
+                          ? EmptyWidget()
+                          : ListView.separated(
+                              scrollDirection: Axis.vertical,
+                              shrinkWrap: true,
+                              physics: ScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                final List<TaskModel> _tasklist =
+                                    _taskController.taskList;
+                                print(
+                                    "--------_tasklist${_taskController.taskList[index]}");
+                                return Padding(
+                                  padding: const EdgeInsets.all(14.0),
+                                  child: Container(
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                        color: Colors.grey.withOpacity(0.1)),
+                                    child: InkWell(
+                                      onDoubleTap: () {
+                                        Get.to(SingleTask(
+                                            id: _tasklist[index].id));
+                                      },
+                                      child: ListTile(
+                                        leading: Container(
+                                          // Adjust the padding as needed
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color:
+                                                  Colors.white, // Border color
+                                              width: 1.0, // Border width
+                                            ),
+                                          ),
+                                          child: InkWell(
+                                            onTap: () {
+                                              avatarController
+                                                  .updateSelectedAvatar(index);
+                                            },
+                                            child: Obx(
+                                              () => CircleAvatar(
+                                                radius: 10.0,
 
-                              child: Icon(
-                                Icons.done,
-                                color: Colors.black,
-                              ),
+                                                child: Icon(
+                                                  Icons.done,
+                                                  color: Colors.black,
+                                                ),
 
-                              backgroundColor: Colors.blue, // Avatar radius
-                              // Your image asset
-                            ),
-                          ),
-                          title: Text(_tasklist[index].taskname),
-                          subtitle: Text("21 may 2023"),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                  onPressed: () {},
-                                  icon: Icon(Icons.delete_outlined)),
-                              IconButton(
-                                  onPressed: () {
-                                    _showEditModelBottomSheet();
-                                  },
-                                  icon: Icon(Icons.edit_note_outlined)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  itemCount: _taskController.taskList.length,
-                  separatorBuilder: (context, index) {
-                    return SizedBox(
-                      height: 15,
-                    );
-                  },
-                ),
-              ),
-            ),
+                                                backgroundColor: avatarController
+                                                            .selectedAvatarIndex
+                                                            .value ==
+                                                        index
+                                                    ? Colors.blue
+                                                    : Colors
+                                                        .grey, // Avatar radius
+                                                // Your image asset
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        title: Text(_tasklist[index].taskname),
+                                        subtitle:
+                                            Text(_tasklist[index].duedate!),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                                onPressed: () async {
+                                                  await _taskController.delete(
+                                                      _tasklist[index].id);
+                                                  // Get.put(TaskController());
+                                                },
+                                                icon: Icon(
+                                                    Icons.delete_outlined)),
+                                            IconButton(
+                                                onPressed: () async {
+                                                  TaskModel task =
+                                                      await _taskController
+                                                          .fetchSingleTask(
+                                                              _tasklist[index]
+                                                                  .id);
+                                                  _showEditModelBottomSheet(
+                                                      task);
+                                                },
+                                                icon: Icon(
+                                                    Icons.edit_note_outlined)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              itemCount: _taskController.taskList.length,
+                              separatorBuilder: (context, index) {
+                                return SizedBox(
+                                  height: 15,
+                                );
+                              },
+                            );
+                    }),
+                  ),
           ],
         ),
       )),
     );
   }
 
-  void _showEditModelBottomSheet() {
+  void _showEditModelBottomSheet(TaskModel task) {
     TextEditingController taskname = TextEditingController();
     TextEditingController description = TextEditingController();
+    taskname.text = task.taskname;
+    description.text = task.taskdiscription;
     Get.bottomSheet(
       Padding(
         padding: const EdgeInsets.all(8.0),
@@ -255,7 +300,23 @@ class Home extends StatelessWidget {
 
                 ListTile(
                   leading: Icon(Icons.alarm_on_outlined),
-                  trailing: Icon(Icons.send),
+                  trailing: IconButton(
+                      onPressed: () {
+                        FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .collection('task')
+                          ..doc(task.id).update({
+                            "taskname": taskname.text,
+                            "taskdiscription": description.text,
+                            "duedate": "11-12-2023",
+                            "ComplettionStaus": false,
+                            "assigneddate": DateTime.now().toString(),
+                          });
+                        Get.put(TaskController());
+                        Get.back();
+                      },
+                      icon: Icon(Icons.send)),
                 ),
 
                 // Add more list items as needed
@@ -345,8 +406,8 @@ void _showModalBottomSheet() {
               ListTile(
                 leading: Icon(Icons.alarm_on_outlined),
                 trailing: IconButton(
-                    onPressed: () {
-                      FirebaseFirestore.instance
+                    onPressed: () async {
+                      await FirebaseFirestore.instance
                           .collection('users')
                           .doc(FirebaseAuth.instance.currentUser!.uid)
                           .collection('task')
@@ -355,8 +416,11 @@ void _showModalBottomSheet() {
                         "taskdiscription": descriptionController.text,
                         "duedate": "11-12-2023",
                         "ComplettionStaus": false,
-                        "assigneddate": DateTime.now(),
+                        "assigneddate": DateTime.now().toString(),
                       });
+
+                      // TaskController controller = Get.find<TaskController>();
+                      // controller.getTask();
                       Get.back();
                     },
                     icon: Icon(Icons.send)),
@@ -370,4 +434,39 @@ void _showModalBottomSheet() {
     ),
     isScrollControlled: true, // Use true for a modal bottom sheet
   );
+}
+
+class EmptyWidget extends StatelessWidget {
+  const EmptyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      scrollDirection: Axis.vertical,
+      shrinkWrap: true,
+      physics: ScrollPhysics(),
+      children: [
+        Container(
+          width: 100,
+          height: 100,
+          child: Icon(
+            Icons.edit_note_outlined,
+            size: 100,
+            color: Colors.blueGrey,
+          ),
+          //child: Image(image: AssetImage('assets/empy.jpg'))
+        ),
+        SizedBox(
+          height: 50,
+        ),
+        Center(
+          child: Container(
+            width: 270,
+            child: Text(
+                "You dont have any task yet\nstart adding task and manage your time efficiently"),
+          ),
+        )
+      ],
+    );
+  }
 }
