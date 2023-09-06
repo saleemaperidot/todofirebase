@@ -81,6 +81,7 @@ class Home extends StatelessWidget {
                               // ButtonStyle(alignment: AlignmentDirectional.topStart),
                               label: Text("add"),
                               onPressed: () {
+                                print("clicked");
                                 _showModalBottomSheet();
                               },
                               icon: Icon(Icons.add))

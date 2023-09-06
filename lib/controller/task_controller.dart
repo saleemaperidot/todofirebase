@@ -73,6 +73,7 @@ class TaskController extends GetxController {
         .collection('task')
         .doc(id)
         .delete();
+    getPendingTask();
   }
 
   Future<TaskModel> fetchSingleTask(String id) async {
