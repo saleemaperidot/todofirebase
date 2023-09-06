@@ -54,23 +54,40 @@ class Home extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: Stack(
+                clipBehavior: Clip.none,
+                fit: StackFit.loose,
                 children: [
                   Container(
-                    width: 250,
-                    child: CupertinoSearchTextField(
-                      prefixIcon: Icon(Icons.rocket),
+                    height: 20,
+                  ),
+                  Positioned(
+                    top: -30,
+                    child: Container(
+                      height: 50,
+                      width: 400,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Container(
+                            width: 250,
+                            child: CupertinoSearchTextField(
+                              prefixIcon: Icon(Icons.rocket),
+                              backgroundColor: Colors.grey.shade800,
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                              // style:
+                              // ButtonStyle(alignment: AlignmentDirectional.topStart),
+                              label: Text("add"),
+                              onPressed: () {
+                                _showModalBottomSheet();
+                              },
+                              icon: Icon(Icons.add))
+                        ],
+                      ),
                     ),
                   ),
-                  ElevatedButton.icon(
-                      // style:
-                      // ButtonStyle(alignment: AlignmentDirectional.topStart),
-                      label: Text("add"),
-                      onPressed: () {
-                        _showModalBottomSheet();
-                      },
-                      icon: Icon(Icons.add))
                 ],
               ),
             ),
@@ -90,7 +107,8 @@ class Home extends StatelessWidget {
                     CircleAvatar(
                       backgroundColor: Colors.grey,
                       radius: 8,
-                      child: Text("1"),
+                      child: Obx(() =>
+                          Text(_taskController.pendingTaskCount.toString())),
                     ),
                   ],
                 ),
@@ -110,7 +128,13 @@ class Home extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10)),
                       width: 30,
                       height: 20,
-                      child: Center(child: Text("1/2")),
+                      child: Center(child: Obx(() {
+                        var count = _taskController.taskList.length;
+                        var completed = _taskController.taskList.length -
+                            _taskController.pendingTaskCount.toInt();
+
+                        return Text("$completed / $count");
+                      })),
                     ),
                   ],
                 ),

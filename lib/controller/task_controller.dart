@@ -6,7 +6,7 @@ import 'package:todolist/Models/taskModel.dart';
 class TaskController extends GetxController {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   RxList<TaskModel> taskList = <TaskModel>[].obs;
-
+  RxInt pendingTaskCount = 0.obs;
   @override
   void onInit() {
     // TODO: implement onInit
@@ -30,6 +30,19 @@ class TaskController extends GetxController {
         },
       ),
     );
+
+    getPendingTask();
+  }
+
+  void getPendingTask() async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('task')
+        .where('ComplettionStaus', isEqualTo: false)
+        .get();
+    pendingTaskCount.value = querySnapshot.size;
+    print(pendingTaskCount);
   }
 
   void getTask() {

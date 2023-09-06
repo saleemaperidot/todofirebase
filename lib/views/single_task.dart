@@ -122,6 +122,9 @@ class _SingleTaskState extends State<SingleTask> {
                               "ComplettionStaus": newValue,
                             });
                           task();
+                          TaskController taskController =
+                              Get.put(TaskController());
+                          taskController.getPendingTask();
                         });
                       },
                     ),
