@@ -7,6 +7,7 @@ class TaskController extends GetxController {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   RxList<TaskModel> taskList = <TaskModel>[].obs;
   RxInt pendingTaskCount = 0.obs;
+
   @override
   void onInit() {
     // TODO: implement onInit

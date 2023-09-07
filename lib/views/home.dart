@@ -5,27 +5,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:get/get.dart';
+
 import 'package:intl/intl.dart';
 import 'package:todolist/Models/taskModel.dart';
 import 'package:todolist/constants/constants.dart';
 import 'package:todolist/controller/auth_controller.dart';
 import 'package:todolist/controller/dateController.dart';
 import 'package:todolist/controller/mark_complte_controller.dart';
+import 'package:todolist/controller/search_controller.dart';
 import 'package:todolist/controller/task_controller.dart';
+import 'package:todolist/debounce.dart';
 import 'package:todolist/main.dart';
 import 'package:todolist/utils/utils.dart';
 import 'package:todolist/views/datepicker.dart';
+import 'package:todolist/views/search_view.dart';
 import 'package:todolist/views/single_task.dart';
 
 final DueDateController _controller = Get.put(DueDateController());
 //final DueDateController _controller = Get.find<DueDateController>();
 final now = DateTime.now();
-
+bool SearchIndicator = false;
 // Format the date in the desired format
 final formattedDate = DateFormat('dd-MMM-yyyy').format(now);
 
 class Home extends StatelessWidget {
   Home({super.key});
+  final _debouncer = Debouncer(milliseconds: 500);
+  final SearchController searchController = Get.put(SearchController());
   final TaskController _taskController = Get.put(TaskController());
   @override
   Widget build(BuildContext context) {
@@ -62,7 +68,7 @@ class Home extends StatelessWidget {
                     height: 20,
                   ),
                   Positioned(
-                    top: -30,
+                    top: -20,
                     child: Container(
                       height: 50,
                       width: 400,
@@ -72,6 +78,19 @@ class Home extends StatelessWidget {
                           Container(
                             width: 250,
                             child: CupertinoSearchTextField(
+                              onChanged: (value) {
+                                if (value.isEmpty) {
+                                  searchController.searchIndicator.value =
+                                      false;
+                                } else {
+                                  searchController.searchIndicator.value = true;
+                                  _debouncer.run(() {
+                                    searchController.updateSearchQuery(value);
+                                  });
+                                }
+
+                                //print(_taskController.searchList.length);
+                              },
                               prefixIcon: Icon(Icons.rocket),
                               backgroundColor: Colors.grey.shade800,
                             ),
@@ -145,63 +164,69 @@ class Home extends StatelessWidget {
               child: Obx(() {
                 return _taskController.taskList.isEmpty
                     ? EmptyWidget()
-                    : ListView.separated(
-                        scrollDirection: Axis.vertical,
-                        shrinkWrap: true,
-                        physics: ScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          final List<TaskModel> _tasklist =
-                              _taskController.taskList;
-                          print(
-                              "--------_tasklist${_taskController.taskList[index]}");
-                          return Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Container(
-                              height: 60,
-                              decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.1)),
-                              child: InkWell(
-                                onTap: () {
-                                  Get.to(SingleTask(id: _tasklist[index].id));
-                                },
-                                child: ListTile(
-                                  leading: LeadingListtile(
-                                      status: _tasklist[index].status),
-                                  title: Text(_tasklist[index].taskname),
-                                  subtitle: Text(_tasklist[index].duedate!),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                          onPressed: () async {
-                                            await _taskController
-                                                .delete(_tasklist[index].id);
-                                            // Get.put(TaskController());
-                                          },
-                                          icon: Icon(Icons.delete_outlined)),
-                                      IconButton(
-                                          onPressed: () async {
-                                            TaskModel task =
-                                                await _taskController
-                                                    .fetchSingleTask(
-                                                        _tasklist[index].id);
-                                            _showEditModelBottomSheet(task);
-                                          },
-                                          icon: Icon(Icons.edit_note_outlined)),
-                                    ],
+                    : searchController.searchIndicator.value
+                        ? SearchView()
+                        : ListView.separated(
+                            scrollDirection: Axis.vertical,
+                            shrinkWrap: true,
+                            physics: ScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              final List<TaskModel> _tasklist =
+                                  _taskController.taskList;
+                              print(
+                                  "--------_tasklist${_taskController.taskList[index]}");
+                              return Padding(
+                                padding: const EdgeInsets.all(14.0),
+                                child: Container(
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                      color: Colors.grey.withOpacity(0.1)),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Get.to(
+                                          SingleTask(id: _tasklist[index].id));
+                                    },
+                                    child: ListTile(
+                                      leading: LeadingListtile(
+                                          status: _tasklist[index].status),
+                                      title: Text(_tasklist[index].taskname),
+                                      subtitle: Text(_tasklist[index].duedate!),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                              onPressed: () async {
+                                                await _taskController.delete(
+                                                    _tasklist[index].id);
+                                                // Get.put(TaskController());
+                                              },
+                                              icon:
+                                                  Icon(Icons.delete_outlined)),
+                                          IconButton(
+                                              onPressed: () async {
+                                                TaskModel task =
+                                                    await _taskController
+                                                        .fetchSingleTask(
+                                                            _tasklist[index]
+                                                                .id);
+                                                _showEditModelBottomSheet(task);
+                                              },
+                                              icon: Icon(
+                                                  Icons.edit_note_outlined)),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
+                            itemCount: _taskController.taskList.length,
+                            separatorBuilder: (context, index) {
+                              return SizedBox(
+                                height: 15,
+                              );
+                            },
                           );
-                        },
-                        itemCount: _taskController.taskList.length,
-                        separatorBuilder: (context, index) {
-                          return SizedBox(
-                            height: 15,
-                          );
-                        },
-                      );
               }),
             ),
           ],
@@ -370,6 +395,11 @@ void _showModalBottomSheet() {
   TextEditingController tasknameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController datecontroller = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  String date = '';
+  String? dateValidationError;
+
   Get.bottomSheet(
     Padding(
       padding: const EdgeInsets.all(8.0),
@@ -382,116 +412,145 @@ void _showModalBottomSheet() {
         // Background color of the bottom sheet
         child: Padding(
           padding: const EdgeInsets.all(13.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                height: 20,
-              ),
-              Text(
-                "Add task",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Container(
-                width: 400.0, // Set the width as needed
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.0), // Optional padding
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.blue, // Border color
-                    width: 1.0, // Border width
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(5.0), // Optional border radius
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Align(
+                  alignment: Alignment.topRight,
+                  child: InkWell(
+                      onTap: () {
+                        Get.back();
+                      },
+                      child: Icon(Icons.close)),
                 ),
-                child: TextFormField(
-                  controller: tasknameController,
-                  decoration: InputDecoration(
-                    hintText: 'Do maths homework',
-                    border: InputBorder.none, // Hide the default border
-                  ),
+                SizedBox(
+                  height: 20,
                 ),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Container(
-                width: 350.0, // Set the width as needed
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.0), // Optional padding
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.blue, // Border color
-                    width: 1.0, // Border width
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(5.0), // Optional border radius
+                Text(
+                  "Add task",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                child: TextFormField(
-                  controller: descriptionController,
-                  maxLines: 4,
-                  maxLength: 100,
-                  decoration: InputDecoration(
-                    hintText: 'Discription',
-                    border: InputBorder.none, // Hide the default border
+                Container(
+                  width: 400.0, // Set the width as needed
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Optional padding
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue, // Border color
+                      width: 1.0, // Border width
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(5.0), // Optional border radius
+                  ),
+                  child: TextFormField(
+                    controller: tasknameController,
+                    decoration: InputDecoration(
+                      hintText: 'Do maths homework',
+                      border: InputBorder.none, // Hide the default border
+                    ),
                   ),
                 ),
-              ),
+                SizedBox(
+                  height: 10,
+                ),
+                Container(
+                  width: 350.0, // Set the width as needed
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Optional padding
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue, // Border color
+                      width: 1.0, // Border width
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(5.0), // Optional border radius
+                  ),
+                  child: TextFormField(
+                    controller: descriptionController,
+                    maxLines: 4,
+                    maxLength: 100,
+                    decoration: InputDecoration(
+                      hintText: 'Discription',
+                      border: InputBorder.none, // Hide the default border
+                    ),
+                  ),
+                ),
 
-              Container(
-                width: 350.0, // Set the width as needed
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.0), // Optional padding
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.blue, // Border color
-                    width: 1.0, // Border width
+                Container(
+                  width: 350.0, // Set the width as needed
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.0), // Optional padding
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue, // Border color
+                      width: 1.0, // Border width
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(5.0), // Optional border radius
                   ),
-                  borderRadius:
-                      BorderRadius.circular(5.0), // Optional border radius
-                ),
-                child: TextFormField(
-                  controller: datecontroller,
-                  decoration: InputDecoration(
-                    hintText: 'Due date(dd-mm-yyyy)',
-                    border: InputBorder.none, // Hide the default border
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: Icon(Icons.alarm_on_outlined),
-                trailing: IconButton(
-                    onPressed: () async {
-                      // Parse the input date string
-                      DateTime parsedDate =
-                          DateFormat('dd-MM-yyyy').parse(datecontroller.text);
-
-                      // Format the parsed date in the desired format
-                      String formatteddueDate =
-                          DateFormat('dd-MMM-yyyy').format(parsedDate);
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .collection('task')
-                          .add({
-                        "taskname": tasknameController.text,
-                        "taskdiscription": descriptionController.text,
-                        "duedate": formatteddueDate.toString(),
-                        "ComplettionStaus": false,
-                        "assigneddate": formattedDate.toString(),
-                      });
-
-                      // TaskController controller = Get.find<TaskController>();
-                      // controller.getTask();
-                      Get.back();
+                  child: TextFormField(
+                    onEditingComplete: () {},
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a date';
+                      }
+                      // Define a regular expression for the "dd-mm-yyyy" format
+                      final dateRegExp = RegExp(r'^\d{2}-\d{2}-\d{4}$');
+                      if (!dateRegExp.hasMatch(value)) {
+                        return 'Invalid date format';
+                      }
+                      return null;
                     },
-                    icon: Icon(Icons.send)),
-              ),
+                    controller: datecontroller,
+                    decoration: InputDecoration(
+                      hintText: 'Due date(dd-mm-yyyy)',
+                      border: InputBorder.none, // Hide the default border
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: Icon(Icons.alarm_on_outlined),
+                  trailing: IconButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          // If the form is valid, save the date and perform further actions
+                          _formKey.currentState!.save();
+                          // You can use the validated date stored in _date here
 
-              // Add more list items as needed
-            ],
+                          // Parse the input date string
+                          DateTime parsedDate = DateFormat('dd-MM-yyyy')
+                              .parse(datecontroller.text);
+
+                          // Format the parsed date in the desired format
+                          String formatteddueDate =
+                              DateFormat('dd-MMM-yyyy').format(parsedDate);
+                          await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(FirebaseAuth.instance.currentUser!.uid)
+                              .collection('task')
+                              .add({
+                            "taskname": tasknameController.text,
+                            "taskdiscription": descriptionController.text,
+                            "duedate": formatteddueDate.toString(),
+                            "ComplettionStaus": false,
+                            "assigneddate": formattedDate.toString(),
+                          });
+
+                          // TaskController controller = Get.find<TaskController>();
+                          // controller.getTask();
+                          Get.back();
+                        }
+                      },
+                      icon: Icon(Icons.send)),
+                ),
+
+                // Add more list items as needed
+              ],
+            ),
           ),
         ),
       ),
